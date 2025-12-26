@@ -1,3 +1,4 @@
+# src/train.py
 import os
 import joblib
 import pandas as pd
@@ -8,13 +9,13 @@ from sklearn.metrics import classification_report, accuracy_score, precision_sco
 
 from preprocess import preprocess
 
-DATA_PATH = os.path.join("data", "nba_games.csv")
+DATA_PATH = os.path.join("data", "mock_games.csv")
 MODEL_PATH = os.path.join("models", "nba_rf_model.joblib")
 
 
 def main():
     if not os.path.exists(DATA_PATH):
-        raise FileNotFoundError(f"{DATA_PATH} not found. Run: python src/fetch_data.py")
+        raise FileNotFoundError(f"{DATA_PATH} not found. Run: python src/mock_data.py")
 
     df = pd.read_csv(DATA_PATH)
     data = preprocess(df)
