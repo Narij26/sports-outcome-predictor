@@ -1,10 +1,28 @@
-# src/api.py (only the request class + predict() part needs to change)
+import os
+import joblib
+import pandas as pd
+from fastapi import FastAPI
+from pydantic import BaseModel
+
+MODEL_PATH = os.path.join("models", "nba_rf_model.joblib")
+
+# Create app FIRST
+app = FastAPI(title="NBA Outcome Predictor", version="1.0.0")
+
+# Load model bundle at import-time
+if not os.path.exists(MODEL_PATH):
+    raise RuntimeError(f"Model not found at {MODEL_PATH}. Train first: python src/train.py")
+
+_bundle = joblib.load(MODEL_PATH)
+_model = _bundle["model"]
+_cols = _bundle["feature_columns"]
+
 
 class PredictRequest(BaseModel):
     home_elo: float
     away_elo: float
 
-    # Optional extras (if model was trained with them)
+    # Optional extras (safe defaults)
     home_rest_days: float = 0.0
     away_rest_days: float = 0.0
     home_injury_impact: float = 0.0
@@ -12,6 +30,11 @@ class PredictRequest(BaseModel):
     home_recent_winrate: float = 0.5
     away_recent_winrate: float = 0.5
     home_win_prob: float = 0.5
+
+
+@app.get("/health")
+def health():
+    return {"status": "ok"}
 
 
 @app.post("/predict")
@@ -32,7 +55,7 @@ def predict(req: PredictRequest):
 
     df = pd.DataFrame([row])
 
-    # Ensure all required columns exist (fill missing with defaults)
+    # Ensure any columns the model expects exist
     for c in _cols:
         if c not in df.columns:
             df[c] = 0.0
